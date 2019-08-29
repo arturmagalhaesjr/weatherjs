@@ -1,16 +1,18 @@
 var APIKEY = "1136291543d398fff86ff109cf09ce1f";
 var ENDPOINT = "http://api.openweathermap.org/data/2.5/weather";
-function toCelsius (t) {
-  return Math.round(t - 273.15);
+var map;
+function toCelsius (number) {
+  return Math.round(number - 273.15);
 }
 function onReturnSuccess (data) {
+  sessionStorage.setItem("weather", JSON.stringify(data));
   $('#result-container').fadeIn();
   $('#result').html(
     "Localizacao: " + data.name + "<br/>" +
     "Temp min: " + toCelsius(data.main.temp_min) + "ºC<br/>" +
     "Temp max: " + toCelsius(data.main.temp_max) + "ºC<br/>" +
     "Humidade: " + data.main.humidity + "<br/>" +
-    "Humidade: " + data.main.pressure + "<br/>"
+    "Pressao: " + data.main.pressure + "<br/>"
   )
 }
 
@@ -36,9 +38,21 @@ function getWeatherByPos (lat, lon) {
 }
 $('#result-container').hide();
 $(document).ready(function () {
-  navigator.geolocation.getCurrentPosition(function(position) {
-    getWeatherByPos(position.coords.latitude, position.coords.longitude);
-  });
+  var dataStorage = sessionStorage.getItem("weather");
+
+  if(dataStorage !== null) {
+    onReturnSuccess(JSON.parse(dataStorage));
+  } else {
+    navigator.geolocation.getCurrentPosition(function(position) {
+      getWeatherByPos(position.coords.latitude, position.coords.longitude);
+      map = new google.maps.Map(document.getElementById('map'), {
+            center: {lat: position.coords.latitude, lng: position.coords.longitude},
+            zoom: 15
+      });
+    });
+  }
+
+
   $('form').submit(function (e) {
     e.preventDefault();
     getWeatherByName($('#city').val(), $('#country').val());
